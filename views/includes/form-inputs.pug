@@ -1,0 +1,14 @@
+h2 Add Users
+form(method="post" action="/create" class="form-check")
+    input(type="hidden" name="_csrf" value=csrfToken)
+    label(for="firstname") First Name:
+    input(type="text" id="firstName" name="firstName" value=firstName)
+    label(for="lastname") Last Name:
+    input(type="text" id="lastName" name="lastName" value=lastName)
+    label(for="email") Email:
+    input(type="email" id="email" name="email" value=email)
+    label(for="password") Password:
+    input(type="password" id="password" name="password")
+    label(for="confirmedPassword") Confirm Password:
+    input(type="password" id="confirmedPassword" name="confirmedPassword")
+    input(type="submit" value="Create User")
