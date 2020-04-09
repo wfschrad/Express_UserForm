@@ -1,6 +1,8 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const csrf = require("csurf");
+const { check, validationResult } = require("express-validator");
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -44,7 +46,7 @@ function validationMiddleware(req, res, next) {
 }
 
 function validationMiddlewareInteresting(req, res, next) {
-  const { firstName, lastName, email, password, confirmedPassword } = req.body;
+  const { firstName, lastName, email, password, confirmedPassword, age, favoriteBeatle } = req.body;
   const errors = [];
 
   if (!firstName) {
@@ -66,7 +68,7 @@ function validationMiddlewareInteresting(req, res, next) {
     errors.push("age is required.");
   }
   if (!favoriteBeatle) {
-    errors.push("Please enter answer.");
+    errors.push("Please choose favorite Beatle!.");
   };
 
 
@@ -102,12 +104,69 @@ app.post("/create", csrfProtection, validationMiddleware, (req, res) => {
 });
 
 app.get("/create-interesting", csrfProtection, (req, res) => {
-
+  res.render("form-interesting", { 
+    title: 'Create an interesting user', 
+    errors: [], 
+    csrfToken: req.csrfToken()});
 });
 
-app.post("/create-interesting", csrfProtection, validationMiddlewareInteresting, (req, res) => {
+app.post(
+  "/create-interesting",
+  csrfProtection, validationMiddlewareInteresting, [
+    check("password")
+      .isLength({ min: 5 })
+      .withMessage("must be at least 5 chars long")
+      .matches(/\d/)
+      .withMessage("must contain a number"),
+    check("age")
+      .exists({ checkFalsy: true })
+      .withMessage("is required"),
+    check("age")
+      .isInt({ min: 0, max: 120 })
+      .withMessage("must be a valid age"),
+    check("favoriteBeatle")
+      .exists({ checkFalsy: true })
+      .withMessage("is required"),
+    check("favoriteBeatle")
+      .isIn(["John", "Paul", "Ringo", "George"])
+      .withMessage("must be a real Beatle member")
+  ],
+  (req, res) => {
+    const validatorErrors = validationResult(req).errors.map(
+      ({ msg, param }) => `${param} ${msg}`
+    );
 
-});
+    const errors = req.errors.concat(validatorErrors);
+    if (errors.length > 0) {
+      res.render("form-interesting", {
+        title: "Create an interesting user",
+        ...req.body,
+        csrfToken: req.csrfToken(),
+        errors
+      });
+      return;
+    }
+    const {
+      firstName,
+      lastName,
+      email,
+      favoriteBeatle,
+      iceCream,
+      age
+    } = req.body;
+
+    users.push({
+      id: users.length + 1,
+      firstName,
+      lastName,
+      email,
+      favoriteBeatle,
+      iceCream: iceCream === "on",
+      age
+    });
+    res.redirect("/");
+  }
+);
 
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
